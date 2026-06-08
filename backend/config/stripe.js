@@ -11,10 +11,18 @@ const platformFee = (amountCents) =>
 
 const sellerNet = (amountCents) => sellerNetCents(amountCents, PLATFORM_FEE_PERCENT);
 
+function toAppError(error) {
+  if (error && typeof error.type === "string" && error.type.startsWith("Stripe")) {
+    return { msg: error.message, status: error.statusCode || 400 };
+  }
+  return error;
+}
+
 module.exports = {
   stripe,
   PLATFORM_FEE_PERCENT,
   FRONTEND_URL,
   platformFee,
   sellerNet,
+  toAppError,
 };
