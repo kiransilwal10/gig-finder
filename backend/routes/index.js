@@ -6,6 +6,7 @@ const registerRouter = require("./auth/register.js")
 const connectRouter = require("./connect")
 const gigsRouter = require("./gigs")
 const checkoutRouter = require("./checkout")
+const ordersRouter = require("./orders")
 
 const router = express.Router();
 
@@ -15,6 +16,7 @@ router.use("/verify", verifyRouter);
 router.use("/connect", connectRouter);
 router.use("/gigs", gigsRouter);
 router.use("/checkout", checkoutRouter);
+router.use("/orders", ordersRouter);
 //router.use("/logout", logoutRouter);
 
 module.exports = router;
