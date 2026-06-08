@@ -70,8 +70,42 @@ async function getUserData({ id }) {
   return retrieved_data;
 }
 
+async function setStripeAccountId({ id, stripeAccountId }) {
+  return await db.none(
+    "UPDATE users SET stripe_account_id = $1, role = true WHERE id = $2",
+    [stripeAccountId, id]
+  );
+}
+
+async function updateStripeStatus({
+  stripeAccountId,
+  chargesEnabled,
+  payoutsEnabled,
+  detailsSubmitted,
+}) {
+  return await db.none(
+    `UPDATE users
+     SET stripe_charges_enabled = $2,
+         stripe_payouts_enabled = $3,
+         stripe_details_submitted = $4
+     WHERE stripe_account_id = $1`,
+    [stripeAccountId, chargesEnabled, payoutsEnabled, detailsSubmitted]
+  );
+}
+
+async function findByStripeAccountId({ stripeAccountId }) {
+  return await db.oneOrNone(
+    "SELECT * FROM users WHERE stripe_account_id = $1",
+    [stripeAccountId]
+  );
+}
+
 module.exports = {
   createUser,
   findByID,
-  findByEmail
+  findByEmail,
+  getUserData,
+  setStripeAccountId,
+  updateStripeStatus,
+  findByStripeAccountId,
 };
