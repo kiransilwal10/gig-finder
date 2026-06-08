@@ -45,3 +45,92 @@ export const verifyUser = async (ctx) => {
     redirect: redirect,
   };
 };
+
+const jsonHeaders = { "Content-Type": "application/json" };
+
+const handle = async (res) => {
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw data;
+  return data;
+};
+
+export const fetchGigs = async (filters = {}) => {
+  const params = new URLSearchParams();
+  if (filters.category) params.set("category", filters.category);
+  if (filters.location) params.set("location", filters.location);
+  if (filters.maxPrice) params.set("maxPrice", filters.maxPrice);
+  const qs = params.toString();
+  const res = await fetch(`${SERVER_URL}/gigs${qs ? `?${qs}` : ""}`, {
+    credentials: "include",
+  });
+  return (await handle(res)).gigs;
+};
+
+export const fetchGig = async (id) => {
+  const res = await fetch(`${SERVER_URL}/gigs/${id}`, {
+    credentials: "include",
+  });
+  return (await handle(res)).gig;
+};
+
+export const createGig = async (payload) => {
+  const res = await fetch(`${SERVER_URL}/gigs`, {
+    method: "POST",
+    credentials: "include",
+    headers: jsonHeaders,
+    body: JSON.stringify(payload),
+  });
+  return (await handle(res)).gig;
+};
+
+export const startOnboarding = async () => {
+  const res = await fetch(`${SERVER_URL}/connect/onboard`, {
+    method: "POST",
+    credentials: "include",
+  });
+  return (await handle(res)).url;
+};
+
+export const fetchConnectStatus = async () => {
+  const res = await fetch(`${SERVER_URL}/connect/status`, {
+    credentials: "include",
+  });
+  return handle(res);
+};
+
+export const fetchDashboardLink = async () => {
+  const res = await fetch(`${SERVER_URL}/connect/dashboard-link`, {
+    method: "POST",
+    credentials: "include",
+  });
+  return (await handle(res)).url;
+};
+
+export const startCheckout = async (gigId) => {
+  const res = await fetch(`${SERVER_URL}/checkout/${gigId}`, {
+    method: "POST",
+    credentials: "include",
+  });
+  return (await handle(res)).url;
+};
+
+export const fetchMyOrders = async () => {
+  const res = await fetch(`${SERVER_URL}/orders/mine`, {
+    credentials: "include",
+  });
+  return (await handle(res)).orders;
+};
+
+export const fetchMySales = async () => {
+  const res = await fetch(`${SERVER_URL}/orders/sales`, {
+    credentials: "include",
+  });
+  return (await handle(res)).orders;
+};
+
+export const fetchEarnings = async () => {
+  const res = await fetch(`${SERVER_URL}/orders/earnings`, {
+    credentials: "include",
+  });
+  return (await handle(res)).earnings;
+};
