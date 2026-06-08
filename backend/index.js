@@ -8,7 +8,7 @@ const http = require("http");
 
 dotenv.config(); // Load environment variables from .env file
 const SECRET_KEY = process.env.SECRET_KEY;
-const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS.split("");
+const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS.split(",");
 
 const app = express();
 const port = process.env.PORT;
@@ -37,8 +37,6 @@ app.use(bodyParser.json());
 const corsOptions = {
   origin: ALLOWED_ORIGINS,
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-  credentials: true, // Enable credentials (e.g., cookies, authentication headers)
-  preflightContinue: true,
   credentials: true,
 };
 app.use(cors(corsOptions));
