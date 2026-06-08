@@ -1,78 +1,173 @@
-import React from "react";
-import styles from "../styles/Home.module.css";
+import { useEffect, useState } from "react";
+import {
+  Box,
+  Typography,
+  Button,
+  Card,
+  CardContent,
+  CardActions,
+  TextField,
+  MenuItem,
+  Grid,
+  Chip,
+  CircularProgress,
+} from "@mui/material";
+import { useSnackbar } from "notistack";
+import { fetchGigs, startCheckout } from "../config/requests";
 
-const HomePage = () => {
+const CATEGORIES = ["Tutoring", "Haircut", "Nails", "Cleaning", "Other"];
+const LOCATIONS = [
+  { label: "Anywhere", value: "" },
+  { label: "On-Campus", value: "on_campus" },
+  { label: "Off-Campus", value: "off_campus" },
+];
+
+const money = (cents) => `$${((cents || 0) / 100).toFixed(2)}`;
+
+export default function ExplorePage() {
+  const { enqueueSnackbar } = useSnackbar();
+  const [gigs, setGigs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [busyId, setBusyId] = useState(null);
+  const [category, setCategory] = useState("");
+  const [location, setLocation] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const data = await fetchGigs({ category, location, maxPrice });
+      setGigs(data || []);
+    } catch (error) {
+      enqueueSnackbar(error?.message || "Couldn't load gigs", {
+        variant: "error",
+      });
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const hire = async (gigId) => {
+    setBusyId(gigId);
+    try {
+      const url = await startCheckout(gigId);
+      window.location.href = url;
+    } catch (error) {
+      enqueueSnackbar(error?.message || "Couldn't start checkout", {
+        variant: "error",
+      });
+      setBusyId(null);
+    }
+  };
+
   return (
-    <div className={styles.container}>
-      <header>
-        <h1>Gig Explorer</h1>
-        <p>Connect. Offer. Succeed.</p>
-        <button>Add My Talent</button>
-      </header>
+    <Box sx={{ maxWidth: 1100, mx: "auto", px: 3, py: 4 }}>
+      <Box sx={{ textAlign: "center", mb: 4 }}>
+        <Typography variant="h3" gutterBottom>
+          Gig Explorer
+        </Typography>
+        <Typography color="text.secondary">Connect. Offer. Succeed.</Typography>
+      </Box>
 
-      <div className={styles["filter-section"]}>
-        <div className={styles.filter}>
-          <h2>Filter</h2>
-          <div className="filter-options">
-            <div className="location-filter">
-              <label>
-                <input type="checkbox" /> On-Campus
-              </label>
-              <label>
-                <input type="checkbox" /> Off-Campus
-              </label>
-            </div>
-            <div className="service-filter">
-              <label>
-                <input type="checkbox" /> Tutoring
-              </label>
-              <label>
-                <input type="checkbox" /> Hair Cutting
-              </label>
-              <label>
-                <input type="checkbox" /> Nail Polishing
-              </label>
-            </div>
-            <div className="price-filter">
-              <label>
-                <input type="radio" name="price" /> Less than $10
-              </label>
-              <label>
-                <input type="radio" name="price" /> $10 - $30
-              </label>
-              <label>
-                <input type="radio" name="price" /> More than $30
-              </label>
-            </div>
-          </div>
-        </div>
-
-        <div className={styles["search-section"]}>
-          <input type="text" placeholder="Search..." />
-          <button>Find help</button>
-        </div>
-      </div>
-
-      <div className={styles["gig-list"]}>
-        {/* Map over your gigs data and render Gig components */}
-        <Gig
-          title="Product Designer"
-          description="Designing Tomorrow, Crafting Today"
+      <Box
+        sx={{
+          display: "flex",
+          gap: 2,
+          flexWrap: "wrap",
+          mb: 4,
+          justifyContent: "center",
+        }}
+      >
+        <TextField
+          select
+          label="Category"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          sx={{ minWidth: 160 }}
+        >
+          <MenuItem value="">All</MenuItem>
+          {CATEGORIES.map((c) => (
+            <MenuItem key={c} value={c}>
+              {c}
+            </MenuItem>
+          ))}
+        </TextField>
+        <TextField
+          select
+          label="Location"
+          value={location}
+          onChange={(e) => setLocation(e.target.value)}
+          sx={{ minWidth: 160 }}
+        >
+          {LOCATIONS.map((l) => (
+            <MenuItem key={l.label} value={l.value}>
+              {l.label}
+            </MenuItem>
+          ))}
+        </TextField>
+        <TextField
+          label="Max price ($)"
+          type="number"
+          value={maxPrice}
+          onChange={(e) => setMaxPrice(e.target.value)}
+          sx={{ minWidth: 140 }}
         />
-        {/* ... other gigs */}
-      </div>
-    </div>
-  );
-};
+        <Button variant="contained" onClick={load}>
+          Filter
+        </Button>
+      </Box>
 
-const Gig = ({ title, description }) => {
-  return (
-    <div className={styles.gig}>
-      <h3>{title}</h3>
-      <p>{description}</p>
-      <button>Hire Me</button>
-    </div>
+      {loading ? (
+        <Box sx={{ textAlign: "center", py: 6 }}>
+          <CircularProgress />
+        </Box>
+      ) : gigs.length === 0 ? (
+        <Typography align="center" color="text.secondary" sx={{ py: 6 }}>
+          No gigs yet. Be the first to list one.
+        </Typography>
+      ) : (
+        <Grid container spacing={3}>
+          {gigs.map((gig) => (
+            <Grid item xs={12} sm={6} md={4} key={gig.id}>
+              <Card sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
+                <CardContent sx={{ flexGrow: 1 }}>
+                  <Box sx={{ display: "flex", gap: 1, mb: 1, flexWrap: "wrap" }}>
+                    {gig.category && <Chip size="small" label={gig.category} />}
+                    {gig.location && (
+                      <Chip
+                        size="small"
+                        variant="outlined"
+                        label={gig.location === "on_campus" ? "On-Campus" : "Off-Campus"}
+                      />
+                    )}
+                  </Box>
+                  <Typography variant="h6">{gig.title}</Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                    {gig.description}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    by {gig.first_name} {gig.last_name}
+                  </Typography>
+                </CardContent>
+                <CardActions sx={{ justifyContent: "space-between", px: 2, pb: 2 }}>
+                  <Typography variant="h6">{money(gig.price_cents)}</Typography>
+                  <Button
+                    variant="contained"
+                    disabled={busyId === gig.id}
+                    onClick={() => hire(gig.id)}
+                  >
+                    {busyId === gig.id ? "Redirecting..." : "Hire"}
+                  </Button>
+                </CardActions>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      )}
+    </Box>
   );
-};
-
-export default HomePage;
+}
