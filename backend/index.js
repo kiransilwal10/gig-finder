@@ -24,6 +24,14 @@ app.use(
     saveUninitialized: true,
   })
 );
+
+const stripeWebhook = require("./routes/webhooks/stripe");
+app.use(
+  "/api/webhooks/stripe",
+  express.raw({ type: "application/json" }),
+  stripeWebhook
+);
+
 app.use(bodyParser.json());
 
 const corsOptions = {
